@@ -1,0 +1,116 @@
+#include <iostream>
+#include <vector>
+#include <ctime>
+#include <string>
+#include <sstream>
+#include <unordered_map>
+
+// Basic hashing function for simplicity (in reality, you would use a cryptographic hash function like SHA-256)
+std::string hashFunction(const std::string &input) {
+    std::hash<std::string> hasher;
+    return std::to_string(hasher(input));
+}
+
+// Vote structure
+struct Vote {
+    std::string voterID;     // Unique ID for the voter
+    std::string candidateID;  // Candidate voted for
+
+    Vote(const std::string &voter, const std::string &candidate) 
+        : voterID(voter), candidateID(candidate) {}
+
+    std::string toString() const {
+        return "Voter: " + voterID + ", Candidate: " + candidateID;
+    }
+};
+
+// Block structure
+class Block {
+public:
+    int index;
+    std::time_t timestamp;
+    std::vector<Vote> votes;
+    std::string prevHash;
+    std::string hash;
+
+    Block(int idx, const std::string &prevHash, const std::vector<Vote> &votes)
+        : index(idx), prevHash(prevHash), votes(votes) {
+        timestamp = std::time(nullptr);
+        hash = calculateHash();
+    }
+
+    std::string calculateHash() const {
+        std::stringstream ss;
+        ss << index << timestamp << prevHash;
+        for (const auto &vote : votes) {
+            ss << vote.toString();
+        }
+        return hashFunction(ss.str());
+    }
+};
+
+// Blockchain structure
+class Blockchain {
+private:
+    std::vector<Block> chain;
+    std::unordered_map<std::string, bool> voters;  // Track if a voter has voted
+
+public:
+    Blockchain() {
+        chain.push_back(createGenesisBlock());
+    }
+
+    Block createGenesisBlock() {
+        return Block(0, "0", {});  // First block with no votes
+    }
+
+    Block getLatestBlock() const {
+        return chain.back();
+    }
+
+    void addBlock(const std::vector<Vote> &votes) {
+        int newIndex = chain.size();
+        std::string prevHash = getLatestBlock().hash;
+        Block newBlock(newIndex, prevHash, votes);
+        chain.push_back(newBlock);
+    }
+
+    bool hasVoted(const std::string &voterID) const {
+        return voters.find(voterID) != voters.end();
+    }
+
+    void recordVote(const std::string &voterID, const std::string &candidateID) {
+        if (hasVoted(voterID)) {
+            std::cout << "Voter " << voterID << " has already voted.\n";
+            return;
+        }
+        std::vector<Vote> newVotes = { Vote(voterID, candidateID) };
+        addBlock(newVotes);
+        voters[voterID] = true;
+        std::cout << "Vote recorded for " << voterID << " voting for " << candidateID << ".\n";
+    }
+
+    void displayBlockchain() const {
+        for (const auto &block : chain) {
+            std::cout << "Block " << block.index << " [hash: " << block.hash << ", prevHash: " << block.prevHash << "]\n";
+            for (const auto &vote : block.votes) {
+                std::cout << "  - " << vote.toString() << "\n";
+            }
+        }
+    }
+};
+
+int main() {
+    Blockchain votingBlockchain;
+
+    // Example voting process
+    votingBlockchain.recordVote("Voter1", "CandidateA");
+    votingBlockchain.recordVote("Voter2", "CandidateB");
+    votingBlockchain.recordVote("Voter1", "CandidateC");  // Duplicate vote, should be ignored
+
+    // Display the blockchain to verify votes
+    std::cout << "\nBlockchain:\n";
+    votingBlockchain.displayBlockchain();
+
+    return 0;
+}
