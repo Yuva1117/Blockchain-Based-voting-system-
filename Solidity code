@@ -1,0 +1,62 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract Voting {
+    // Candidate structure to hold candidate data
+    struct Candidate {
+        uint id;
+        string name;
+        uint voteCount;
+    }
+
+    // State variables
+    mapping(uint => Candidate) public candidates; // Maps candidate ID to Candidate
+    mapping(address => bool) public hasVoted; // Tracks whether an address has voted
+    uint public candidatesCount; // Total number of candidates
+
+    // Event to be emitted when a vote is cast
+    event Voted(address indexed voter, uint candidateId);
+
+    // Constructor to initialize the contract with some candidates
+    constructor() {
+        addCandidate("Alice");
+        addCandidate("Bob");
+    }
+
+    // Private function to add a new candidate (only accessible within contract)
+    function addCandidate(string memory _name) private {
+        candidatesCount++;
+        candidates[candidatesCount] = Candidate(candidatesCount, _name, 0);
+    }
+
+    // Public function to vote for a candidate
+    function vote(uint _candidateId) public {
+        // Check if the voter has already voted
+        require(!hasVoted[msg.sender], "You have already voted.");
+
+        // Check if the candidate ID is valid
+        require(_candidateId > 0 && _candidateId <= candidatesCount, "Invalid candidate ID.");
+
+        // Record that the voter has voted
+        hasVoted[msg.sender] = true;
+
+        // Increment the candidate's vote count
+        candidates[_candidateId].voteCount++;
+
+        // Emit the Voted event for logging purposes
+        emit Voted(msg.sender, _candidateId);
+    }
+
+    // Public function to retrieve the vote count of a specific candidate
+    function getVoteCount(uint _candidateId) public view returns (uint) {
+        require(_candidateId > 0 && _candidateId <= candidatesCount, "Invalid candidate ID.");
+        return candidates[_candidateId].voteCount;
+    }
+
+    // Public function to get candidate details
+    function getCandidate(uint _candidateId) public view returns (string memory, uint) {
+        require(_candidateId > 0 && _candidateId <= candidatesCount, "Invalid candidate ID.");
+        Candidate memory candidate = candidates[_candidateId];
+        return (candidate.name, candidate.voteCount);
+    }
+}
