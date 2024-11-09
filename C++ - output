@@ -1,0 +1,12 @@
+Vote recorded for Voter1 voting for CandidateA.
+Vote recorded for Voter2 voting for CandidateB.
+Voter Voter1 has already voted.
+
+Blockchain:
+Block 0 [hash: 6328461900678362776, prevHash: 0]
+  
+Block 1 [hash: -7591879937381456327, prevHash: 6328461900678362776]
+  - Voter: Voter1, Candidate: CandidateA
+
+Block 2 [hash: -1863011329295816322, prevHash: -7591879937381456327]
+  - Voter: Voter2, Candidate: CandidateB
